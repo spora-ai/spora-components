@@ -113,8 +113,11 @@ const elements = computed(() => archetypeElements(props.archetype, props.variant
 </template>
 
 <style scoped>
-.spora-archetype-svg {
-  width: 66.66%;
-  height: 66.66%;
+/* Layered for the same reason as `Icon.vue`. */
+@layer components {
+  .spora-archetype-svg {
+    width: 66.66%;
+    height: 66.66%;
+  }
 }
 </style>

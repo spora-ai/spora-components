@@ -15,6 +15,9 @@
  *                                            derived from `name` via
  *                                            `useInitials`, on a slate
  *                                            tile (#475569 / #f8fafc)
+ *                                            unless the consumer sets
+ *                                            `--spora-avatar-bg` /
+ *                                            `--spora-avatar-fg`
  *
  * Tailwind-agnostic — every sizing / colour utility has been moved
  * into the scoped `<style>` block, so the package can be consumed by
@@ -131,59 +134,74 @@ const imageSrc = computed<string>(() => {
 </template>
 
 <style scoped>
-.avatar {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  user-select: none;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  line-height: 1;
-}
+/* The whole block is layered, border-radius included: `.avatar--md[data-v-*]`
+ * has specificity 0,2,0 and so beats a consumer's `rounded-full` at 0,1,0 on
+ * specificity alone, which would break the deliberate overrides at the call
+ * sites. Layering leaves intra-block source order intact, so
+ * `.avatar--initials` still beats `.avatar--md` on border-radius. */
+@layer components {
+  .avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
 
-.avatar--sm {
-  width: 2rem;
-  height: 2rem;
-  font-size: 0.65rem;
-  border-radius: 0.5rem;
-}
+  .avatar--sm {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.65rem;
+    border-radius: 0.5rem;
+  }
 
-.avatar--md {
-  width: 2.75rem;
-  height: 2.75rem;
-  font-size: 0.75rem;
-  border-radius: 0.75rem;
-}
+  .avatar--md {
+    width: 2.75rem;
+    height: 2.75rem;
+    font-size: 0.75rem;
+    border-radius: 0.75rem;
+  }
 
-.avatar--lg {
-  width: 3.5rem;
-  height: 3.5rem;
-  font-size: 0.875rem;
-  border-radius: 0.75rem;
-}
+  .avatar--lg {
+    width: 3.5rem;
+    height: 3.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.75rem;
+  }
 
-.avatar--xl {
-  width: 5rem;
-  height: 5rem;
-  font-size: 1rem;
-  border-radius: 0.75rem;
-}
+  .avatar--xl {
+    width: 5rem;
+    height: 5rem;
+    font-size: 1rem;
+    border-radius: 0.75rem;
+  }
 
-.avatar__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  .avatar__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-/* Initials fallback: slate tile (slate-600 / slate-50), fully-rounded.
- * The 9999px radius overrides the size's border-radius to mirror the
- * host's `rounded-full` behaviour on the initials branch. */
-.avatar--initials {
-  background-color: #475569;
-  color: #f8fafc;
-  border-radius: 9999px;
+  /* Initials fallback: fully-rounded tile, defaulting to slate
+   * (slate-600 / slate-50). The 9999px radius overrides the size's
+   * border-radius to mirror the host's `rounded-full` behaviour on the
+   * initials branch.
+   *
+   * The two colours are custom properties rather than a prop so that a
+   * theme-aware consumer re-themes the tile from its own stylesheet
+   * without the package growing an API whose effect would depend on which
+   * of the three branches above happened to render. The hex fallbacks are
+   * the pre-existing values, so a consumer that sets nothing is
+   * unaffected. */
+  .avatar--initials {
+    background-color: var(--spora-avatar-bg, #475569);
+    color: var(--spora-avatar-fg, #f8fafc);
+    border-radius: 9999px;
+  }
 }
 </style>
