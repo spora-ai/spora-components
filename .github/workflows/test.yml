@@ -32,3 +32,47 @@ jobs:
         with:
           name: coverage
           path: coverage/
+
+  sonarqube:
+    # SonarCloud analysis lives here rather than in its own workflow so the
+    # coverage produced above can be consumed directly. Automatic Analysis is
+    # OFF for this project, which is the org default for repos that scan in
+    # CI — the scanner and AutoAnalysis cannot both run, and SonarCloud aborts
+    # the CI scan with "You are running CI analysis while Automatic Analysis
+    # is enabled" when both are on.
+    name: SonarQube scan
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the scanner needs blame data and the previous
+          # analysis to compute the new-code baseline.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+
+      - name: SonarQube Scan
+        env:
+          # SONAR_TOKEN is a GitHub organization secret, not a repo secret.
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # Provided automatically; forwarded so the action can mark the
+          # check run on the PR.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Pinned to the v8.2.0 commit SHA rather than the floating tag: a tag
+        # can be re-pointed at different code, which the Actions security
+        # linter rejects. Mirrors spora-frontend.
+        uses: sonarsource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0
+        with:
+          args: >
+            -Dsonar.organization=spora-ai
+            -Dsonar.projectKey=spora-ai_spora-components
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
