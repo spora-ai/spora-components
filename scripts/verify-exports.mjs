@@ -14,7 +14,7 @@
  * means the same command is the only supported invocation.
  */
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, existsSync } from 'node:fs'
+import { mkdtempSync, readdirSync, readFileSync, rmSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -49,15 +49,12 @@ function packAndUnpack() {
             stdio: 'pipe',
         })
 
-        const [tarball] = execFileSync('sh', ['-c', `ls ${workspace}/*.tgz`], { encoding: 'utf8' })
-            .trim()
-            .split('\n')
-
-        if (!tarball || !existsSync(tarball)) {
+        const tarball = readdirSync(workspace).find((entry) => entry.endsWith('.tgz'))
+        if (!tarball) {
             throw new Error('npm pack produced no tarball')
         }
 
-        execFileSync('tar', ['-xzf', tarball, '-C', workspace], { stdio: 'pipe' })
+        execFileSync('tar', ['-xzf', join(workspace, tarball), '-C', workspace], { stdio: 'pipe' })
 
         return join(workspace, 'package')
     } catch (error) {
