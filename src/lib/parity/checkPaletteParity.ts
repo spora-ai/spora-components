@@ -1,24 +1,18 @@
 import { PALETTES, type PaletteKey } from '../palettes'
 
 /**
- * Canonical palette list mirrored from
- * `Spora\Services\AgentPictures\Palette` on the backend. The mapping
- * is the contract for which palette keys are valid across the wire
- * (AgentPicture rows store `palette_key` only — the server resolves
- * the hex pairs at read time).
+ * The palette keys the JS layer knows about, derived from `PALETTES`
+ * rather than hand-listed so the two cannot drift within this package.
  *
- * This file is the source of truth for the JS side. `palettes.ts`
- * imports `PALETTES` from this module so the runtime data and the
- * parity contract live together; tests assert `PALETTES.map(p => p.key)`
- * matches the PHP enum.
+ * This does **not** verify parity with the backend: the canonical
+ * `Spora\Services\AgentPictures\Palette` enum lives in a separate repo
+ * and is unreachable from a published npm package. The parity contract
+ * is enforced in `palettes.spec.ts`, which pins this list against a
+ * literal transcription of the PHP cases — updating one without the
+ * other fails that test.
  */
 export const PALETTE_KEYS: readonly PaletteKey[] = PALETTES.map((p) => p.key)
 
-/**
- * Returns the list of palette keys the JS layer knows about. Used by
- * `palettes.spec.ts` to assert parity against the canonical PHP
- * source — a single source of truth, asserted from one direction.
- */
 export function getPaletteKeys(): readonly PaletteKey[] {
   return PALETTE_KEYS
 }

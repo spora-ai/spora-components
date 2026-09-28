@@ -7,9 +7,9 @@
  *
  * Keeping the map in lockstep with the backend is a release-train
  * concern: any new palette must be added to both repos before tagging.
- * The package's CI runs `checkPaletteParity()` against the canonical
- * PHP `Palette::all()` mapping; the parity check fails the build when
- * the two lists drift.
+ * `palettes.spec.ts` pins the key list against a literal copy of the
+ * PHP `Palette` cases, so a palette added or renamed on one side fails
+ * this package's test suite.
  */
 
 export type PaletteKey =

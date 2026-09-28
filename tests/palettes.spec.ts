@@ -5,9 +5,13 @@ import {
     ARCHETYPES,
     VARIANTS,
 } from '@/lib'
+import { getPaletteKeys } from '@/lib/parity/checkPaletteParity'
 import { STATUS_PALETTE, statusDisplay } from '@/avatar'
 
-const PALETTE_KEYS = [
+// Literal transcription of the `Spora\Services\AgentPictures\Palette`
+// cases. This package cannot import the PHP enum, so the two repos are
+// kept in lockstep by failing here when one gains or renames a case.
+const PHP_PALETTE_CASES = [
     'slate',
     'red',
     'orange',
@@ -20,13 +24,19 @@ const PALETTE_KEYS = [
     'pink',
 ] as const
 
+const PALETTE_KEYS = getPaletteKeys()
+
 describe('PALETTES', () => {
     it('has exactly 10 entries with the canonical keys', () => {
         expect(PALETTES).toHaveLength(10)
         expect(PALETTES.map((p) => p.key)).toEqual([...PALETTE_KEYS])
     })
 
-    it.each(PALETTE_KEYS)('exposes non-empty background + foreground hex for "%s"', (key) => {
+    it('has not drifted from the PHP Palette enum cases', () => {
+        expect([...PALETTE_KEYS]).toEqual([...PHP_PALETTE_CASES])
+    })
+
+    it.each(PHP_PALETTE_CASES)('exposes non-empty background + foreground hex for "%s"', (key) => {
         const swatch = paletteFor(key)
         expect(swatch.background).toMatch(/^#[0-9A-Fa-f]{3,8}$/)
         expect(swatch.foreground).toMatch(/^#[0-9A-Fa-f]{3,8}$/)

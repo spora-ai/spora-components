@@ -3,26 +3,34 @@
   "version": "0.1.0",
   "description": "Shared Vue 3 component primitives (Avatar, Icon, palettes, composables) for Spora frontends.",
   "type": "module",
-  "main": "./dist/avatar.js",
-  "module": "./dist/avatar.js",
-  "types": "./dist/types/avatar/index.d.ts",
   "exports": {
     "./avatar": {
       "types": "./dist/types/avatar/index.d.ts",
-      "import": "./dist/avatar.js"
+      "import": "./dist/avatar.js",
+      "default": "./dist/avatar.js"
     },
     "./icons": {
       "types": "./dist/types/icons/index.d.ts",
-      "import": "./dist/icons.js"
+      "import": "./dist/icons.js",
+      "default": "./dist/icons.js"
     },
     "./composables": {
       "types": "./dist/types/composables/index.d.ts",
-      "import": "./dist/composables.js"
+      "import": "./dist/composables.js",
+      "default": "./dist/composables.js"
     },
     "./lib": {
       "types": "./dist/types/lib/index.d.ts",
-      "import": "./dist/lib.js"
+      "import": "./dist/lib.js",
+      "default": "./dist/lib.js"
     },
+    "./types": {
+      "types": "./dist/types/types/profilePicture.d.ts",
+      "import": "./dist/types/types/profilePicture.d.ts",
+      "default": "./dist/types/types/profilePicture.d.ts"
+    },
+    "./styles": "./dist/spora-components.css",
+    "./styles.css": "./dist/spora-components.css",
     "./package.json": "./package.json"
   },
   "files": [

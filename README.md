@@ -18,6 +18,7 @@ npm install @spora/components
 
 ```vue
 <script setup lang="ts">
+import '@spora/components/styles'
 import { Avatar } from '@spora/components/avatar'
 import { Icon } from '@spora/components/icons'
 import { paletteFor } from '@spora/components/lib'
@@ -29,14 +30,20 @@ import { paletteFor } from '@spora/components/lib'
 </template>
 ```
 
+The stylesheet import is required. Every component ships its own scoped CSS
+rather than relying on consumer Tailwind utilities, and Vite emits that CSS to a
+single file that nothing imports on your behalf.
+
 ### Subpaths
 
 | Subpath | Exports |
 |---|---|
 | `@spora/components/avatar` | `Avatar`, `ArchetypeIcon`, `AgentAvatar`, `GroupAvatar`, `STATUS_PALETTE` |
 | `@spora/components/icons` | `Icon` |
-| `@spora/components/composables` | `useInitials`, `useRelativeTime` |
-| `@spora/components/lib` | `palettes`, `archetypeSvgs`, `safeHex`, `parity` |
+| `@spora/components/composables` | `useInitials`, `useRelativeTime`, `formatRelativeTime` |
+| `@spora/components/lib` | `palettes`, `archetypeSvgs`, `safeHex`, `parity/checkPaletteParity` |
+| `@spora/components/types` | `ProfilePicture` |
+| `@spora/components/styles` | stylesheet (see above) |
 
 ## Components
 
@@ -115,6 +122,20 @@ ABORTED              → 'aborted' · #d946ef
 
 Unmapped statuses fall through to `'idle'`. The mapping is duck-typed —
 `status: string | null | undefined` accepts any wire enum.
+
+## Testing against this package
+
+If your own suite asserts on rendered size or colour, Vitest stubs CSS imports
+to empty by default, so those assertions read `0px` and fail. Enable
+`test.css: true` in your Vitest config and import the stylesheet in the spec:
+
+```ts
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: { css: true },
+})
+```
 
 ## Local development
 
