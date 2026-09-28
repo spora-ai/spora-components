@@ -83,6 +83,38 @@ fallback. Initials are derived from `name` — there is no `initials` prop.
 }
 ```
 
+#### Theming the initials tile
+
+The initials fallback paints a tile, and its two colours are the only
+themable part of the component. They are exposed as custom properties rather
+than props, so a theme-aware app re-themes them from its own stylesheet:
+
+| Property | Default | Applies to |
+|---|---|---|
+| `--spora-avatar-bg` | `#475569` (slate-600) | `.avatar--initials` background |
+| `--spora-avatar-fg` | `#f8fafc` (slate-50) | `.avatar--initials` text |
+
+Set them anywhere that inherits to the avatar — a wrapper, `.dark`, `:root`.
+Declare each pair twice only if the values differ per theme:
+
+```css
+/* matches `bg-muted text-foreground` */
+:root {
+  --spora-avatar-bg: hsl(0 0% 95.9%);
+  --spora-avatar-fg: hsl(240 10% 3.9%);
+}
+
+.dark {
+  --spora-avatar-bg: hsl(240 3.7% 15.9%);
+  --spora-avatar-fg: hsl(240 10% 98%);
+}
+```
+
+Leave them unset and the tile is the slate default, so an app that does
+nothing looks exactly as it did before. Nothing else is themable this way —
+the image and archetype branches take their colours from
+`profilePicture`, and sizing is yours via utility classes (see above).
+
 ### `<AgentAvatar>` / `<GroupAvatar>`
 
 Thin wrappers taking the wire payload directly:

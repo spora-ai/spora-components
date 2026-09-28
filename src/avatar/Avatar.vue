@@ -15,6 +15,9 @@
  *                                            derived from `name` via
  *                                            `useInitials`, on a slate
  *                                            tile (#475569 / #f8fafc)
+ *                                            unless the consumer sets
+ *                                            `--spora-avatar-bg` /
+ *                                            `--spora-avatar-fg`
  *
  * Tailwind-agnostic — every sizing / colour utility has been moved
  * into the scoped `<style>` block, so the package can be consumed by
@@ -184,12 +187,20 @@ const imageSrc = computed<string>(() => {
     object-fit: cover;
   }
 
-  /* Initials fallback: slate tile (slate-600 / slate-50), fully-rounded.
-   * The 9999px radius overrides the size's border-radius to mirror the
-   * host's `rounded-full` behaviour on the initials branch. */
+  /* Initials fallback: fully-rounded tile, defaulting to slate
+   * (slate-600 / slate-50). The 9999px radius overrides the size's
+   * border-radius to mirror the host's `rounded-full` behaviour on the
+   * initials branch.
+   *
+   * The two colours are custom properties rather than a prop so that a
+   * theme-aware consumer re-themes the tile from its own stylesheet
+   * without the package growing an API whose effect would depend on which
+   * of the three branches above happened to render. The hex fallbacks are
+   * the pre-existing values, so a consumer that sets nothing is
+   * unaffected. */
   .avatar--initials {
-    background-color: #475569;
-    color: #f8fafc;
+    background-color: var(--spora-avatar-bg, #475569);
+    color: var(--spora-avatar-fg, #f8fafc);
     border-radius: 9999px;
   }
 }
