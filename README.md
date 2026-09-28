@@ -30,13 +30,32 @@ import { Icon } from '@spora-ai/components/icons'
 ```
 
 **The stylesheet import is required.** Components ship their own scoped CSS
-instead of relying on your Tailwind utilities, so nothing styles them on your
-behalf. Import it once, at your app entry:
+rather than depending on your Tailwind utilities, so they are styled even if
+you do not use Tailwind at all. Import it once, at your app entry:
 
 ```ts
 // main.ts
 import '@spora-ai/components/styles'
 ```
+
+### Your utility classes win
+
+Those component defaults are wrapped in `@layer components`, so your own
+classes override them. On Tailwind v4 this is automatic: its
+`@import "tailwindcss"` puts utilities in a layer that outranks
+`components`. On Tailwind v3, or on no Tailwind at all, your unlayered classes
+outrank the layer anyway.
+
+```vue
+<!-- renders at 3rem, not the 1rem default -->
+<Icon name="refresh" class="h-12 w-12" />
+```
+
+This works because of the cascade's layer rule: **unlayered styles beat
+layered styles regardless of specificity.** Before these defaults were
+layered, `.spora-icon { width: 1rem }` outranked a consumer's `h-12` purely by
+being unlayered, and every `<Icon class="h-…">` silently collapsed to 1rem. A
+consumer that passes no sizing class still gets the package default.
 
 ## Subpaths
 
@@ -118,6 +137,13 @@ Unmapped statuses fall through to `idle`. Typed as
 Vitest stubs CSS imports by default, so assertions on rendered size or colour
 read `0px`. Set `test.css: true` and import the stylesheet in the spec if you
 assert on layout.
+
+`getComputedStyle` cannot be used to assert that a consumer class *overrides*
+a component default. Neither happy-dom nor jsdom implements cascade layers —
+jsdom flattens `@layer` blocks and resolves them by source order alone, which
+answers a different question than the one a cascade-layer bug poses. Assert
+layer membership in the emitted CSS instead, as `tests/cascadeLayer.spec.ts`
+does, or check the built bundle in a real browser.
 
 ## Development
 

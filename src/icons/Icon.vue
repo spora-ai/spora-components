@@ -305,9 +305,14 @@ const elements = (name: string): IconElement[] => {
 </template>
 
 <style scoped>
-.spora-icon {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
+/* Layered so consumer utilities win. An unlayered declaration outranks every
+ * layered one regardless of specificity, so this default would otherwise beat
+ * a consumer's `h-6` sitting in `@layer utilities`. */
+@layer components {
+  .spora-icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+  }
 }
 </style>
