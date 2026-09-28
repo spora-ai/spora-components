@@ -1,4 +1,4 @@
-# `@spora/components`
+# `@spora-ai/components`
 
 Shared Vue 3 component primitives for the Spora ecosystem — `Avatar`, `Icon`,
 the agent palette, archetype iconography, and a couple of composables that
@@ -11,17 +11,17 @@ do not need to extend their Tailwind `content` glob to pick up the package.
 ## Install
 
 ```sh
-npm install @spora/components
+npm install @spora-ai/components
 ```
 
 ## Usage
 
 ```vue
 <script setup lang="ts">
-import '@spora/components/styles'
-import { Avatar } from '@spora/components/avatar'
-import { Icon } from '@spora/components/icons'
-import { paletteFor } from '@spora/components/lib'
+import '@spora-ai/components/styles'
+import { Avatar } from '@spora-ai/components/avatar'
+import { Icon } from '@spora-ai/components/icons'
+import { paletteFor } from '@spora-ai/components/lib'
 </script>
 
 <template>
@@ -38,12 +38,12 @@ single file that nothing imports on your behalf.
 
 | Subpath | Exports |
 |---|---|
-| `@spora/components/avatar` | `Avatar`, `ArchetypeIcon`, `AgentAvatar`, `GroupAvatar`, `STATUS_PALETTE` |
-| `@spora/components/icons` | `Icon` |
-| `@spora/components/composables` | `useInitials`, `useRelativeTime`, `formatRelativeTime` |
-| `@spora/components/lib` | `palettes`, `archetypeSvgs`, `safeHex`, `parity/checkPaletteParity` |
-| `@spora/components/types` | `ProfilePicture` |
-| `@spora/components/styles` | stylesheet (see above) |
+| `@spora-ai/components/avatar` | `Avatar`, `ArchetypeIcon`, `AgentAvatar`, `GroupAvatar`, `STATUS_PALETTE` |
+| `@spora-ai/components/icons` | `Icon` |
+| `@spora-ai/components/composables` | `useInitials`, `useRelativeTime`, `formatRelativeTime` |
+| `@spora-ai/components/lib` | `palettes`, `archetypeSvgs`, `safeHex`, `parity/checkPaletteParity` |
+| `@spora-ai/components/types` | `ProfilePicture` |
+| `@spora-ai/components/styles` | stylesheet (see above) |
 
 ## Components
 
@@ -108,7 +108,7 @@ blobs — single-`d` strings only (the security posture from the host's
 
 ## Status palettes (used by team-graph plugin)
 
-`STATUS_PALETTE` in `@spora/components/avatar` maps an `AgentStatus` string
+`STATUS_PALETTE` in `@spora-ai/components/avatar` maps an `AgentStatus` string
 to its display colour + label:
 
 ```ts

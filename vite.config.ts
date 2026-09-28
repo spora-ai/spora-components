@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import path from 'node:path'
 
 /**
- * Vite lib-mode build for @spora/components. One entry per public
+ * Vite lib-mode build for @spora-ai/components. One entry per public
  * subpath in `package.json#exports` (`avatar`, `icons`, `composables`,
  * `lib`). Vue is external — consumers resolve it from their own
  * `node_modules` and pass their `vue@^3.5` to runtime via the

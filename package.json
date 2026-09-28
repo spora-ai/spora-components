@@ -1,8 +1,28 @@
 {
-  "name": "@spora/components",
+  "name": "@spora-ai/components",
   "version": "0.1.0",
   "description": "Shared Vue 3 component primitives (Avatar, Icon, palettes, composables) for Spora frontends.",
+  "keywords": [
+    "spora",
+    "vue",
+    "components",
+    "avatar",
+    "icons"
+  ],
+  "homepage": "https://github.com/spora-ai/spora-components#readme",
+  "bugs": {
+    "url": "https://github.com/spora-ai/spora-components/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spora-ai/spora-components.git"
+  },
+  "license": "MIT",
+  "author": "Fabian Graßl",
   "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
     "./avatar": {
       "types": "./dist/types/avatar/index.d.ts",
@@ -67,14 +87,6 @@
     "vue-eslint-parser": "^10.4.0",
     "vue-tsc": "^2.2.0"
   },
-  "keywords": [
-    "spora",
-    "vue",
-    "components",
-    "avatar",
-    "icons"
-  ],
-  "license": "MIT",
   "publishConfig": {
     "access": "public"
   }

@@ -1,5 +1,5 @@
 /**
- * Status palette for @spora/components — single source of truth for
+ * Status palette for @spora-ai/components — single source of truth for
  * AgentAvatar's status dot + the plugin's status pill colour map.
  *
  * `ABORTED` uses fuchsia-500 instead of a near-violet: the host's
