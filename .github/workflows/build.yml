@@ -27,7 +27,7 @@ jobs:
           test -f dist/spora-components.css
           test -d dist/types
       - name: publint
-        run: npx --yes publint@0.3.24 --strict
+        run: npm run lint:pkg
       # Every exports target must survive the `files` filter. publint
       # reads the working tree, so it cannot catch a target that builds
       # fine locally but is absent from the published tarball.
