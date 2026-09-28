@@ -8,16 +8,53 @@
  * field. Either one ships a package whose subpaths resolve on the
  * author's machine and 404 for every consumer.
  */
-import { existsSync, readFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { existsSync, readFileSync, statSync } from 'node:fs'
+import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 
-const packageRoot = process.argv[2]
+/**
+ * The directory argument is attacker-reachable in the general case (it
+ * arrives on argv, and CI interpolates a runner-temp path into it), so
+ * it is pinned to a real directory that actually contains a manifest
+ * before any read is attempted. An exports target that resolves
+ * outside the package is a manifest defect, not a path to follow.
+ */
+function validatedRoot(candidate) {
+    if (!candidate) {
+        console.error('usage: verify-exports.mjs <unpacked-package-dir>')
+        process.exit(2)
+    }
 
-if (!packageRoot) {
-    console.error('usage: verify-exports.mjs <unpacked-package-dir>')
-    process.exit(2)
+    const root = resolve(candidate)
+
+    if (!existsSync(root) || !statSync(root).isDirectory()) {
+        console.error(`not a directory: ${candidate}`)
+        process.exit(2)
+    }
+
+    const manifestPath = join(root, 'package.json')
+    if (!existsSync(manifestPath) || !statSync(manifestPath).isFile()) {
+        console.error(`no package.json in ${candidate}`)
+        process.exit(2)
+    }
+
+    return root
 }
 
+function resolveWithin(root, target) {
+    const absolute = resolve(root, target)
+    const pathFromRoot = relative(root, absolute)
+
+    if (pathFromRoot === '' || pathFromRoot.startsWith('..') || isAbsolute(pathFromRoot)) {
+        throw new Error(`exports target escapes the package directory: ${target}`)
+    }
+    if (!pathFromRoot.split(sep).every((segment) => segment !== '..')) {
+        throw new Error(`exports target contains a traversal segment: ${target}`)
+    }
+
+    return absolute
+}
+
+const packageRoot = validatedRoot(process.argv[2])
 const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
 
 function collectTargets(node, path, found) {
@@ -44,17 +81,28 @@ if (found.length === 0) {
     process.exit(1)
 }
 
-const missing = found.filter(({ target }) => !existsSync(resolve(packageRoot, target)))
+const rows = found.map(({ path, target }) => {
+    let absolute
+    try {
+        absolute = resolveWithin(packageRoot, target)
+    } catch (error) {
+        return { path, target, present: false, reason: error.message }
+    }
+    return { path, target, present: existsSync(absolute), reason: null }
+})
 
-for (const { path, target } of found) {
-    const status = existsSync(resolve(packageRoot, target)) ? 'ok  ' : 'MISS'
-    console.log(`${status} ${path} -> ${target}`)
+for (const { path, target, present, reason } of rows) {
+    console.log(`${present ? 'ok  ' : 'MISS'} ${path} -> ${target}${reason ? ` (${reason})` : ''}`)
 }
 
-if (missing.length > 0) {
-    console.error(`\n${missing.length} exports target(s) missing from the packed tarball:`)
-    for (const { path, target } of missing) console.error(`  ${path} -> ${target}`)
+const bad = rows.filter(({ present }) => !present)
+
+if (bad.length > 0) {
+    console.error(`\n${bad.length} exports target(s) missing from the packed tarball:`)
+    for (const { path, target, reason } of bad) {
+        console.error(`  ${path} -> ${target}${reason ? ` — ${reason}` : ''}`)
+    }
     process.exit(1)
 }
 
-console.log(`\nall ${found.length} exports targets present`)
+console.log(`\nall ${rows.length} exports targets present`)
