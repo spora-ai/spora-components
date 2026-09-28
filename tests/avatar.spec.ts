@@ -46,6 +46,34 @@ describe('<Avatar>', () => {
             )
         })
 
+        it('omits the ?v= cache buster when image_updated_at is null', () => {
+            const wrapper = mount(Avatar, {
+                props: {
+                    name: 'Max',
+                    profilePicture: { ...imagePicture, image_updated_at: null },
+                },
+            })
+
+            const img = wrapper.find('img')
+            expect(img.attributes('src')).toBe('https://example.test/avatars/abc.png')
+            expect(img.attributes('alt')).toContain('uploaded at unknown')
+        })
+
+        // isImage narrows on `typeof image_url === 'string'`, so a null URL
+        // must fall through to the initials tile rather than emitting an
+        // <img src=""> — which browsers resolve against the current page.
+        it('falls back to initials when kind is image but image_url is null', () => {
+            const wrapper = mount(Avatar, {
+                props: {
+                    name: 'Max',
+                    profilePicture: { ...imagePicture, image_url: null },
+                },
+            })
+
+            expect(wrapper.find('img').exists()).toBe(false)
+            expect(wrapper.get('[data-testid="avatar-initials"]').text()).toBe('MA')
+        })
+
         it('exposes the updated_at timestamp via data-image-updated-at on the <img>', () => {
             const wrapper = mount(Avatar, {
                 props: { name: 'Max', profilePicture: imagePicture },

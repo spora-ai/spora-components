@@ -63,3 +63,25 @@ describe('<Icon>', () => {
         expect(rendered.attributes('d')).toBe(path)
     })
 })
+/**
+ * The template dispatches on element shape, and the registry uses all
+ * seven tags. Without this, a change that breaks the circle or rect
+ * branch would ship unstyled and unnoticed: no other test renders an
+ * icon whose elements are not all `path`.
+ */
+describe('Icon element shapes', () => {
+    const byTag: Record<string, string> = {
+        path: 'bell',
+        circle: 'compass',
+        ellipse: 'database',
+        line: 'download',
+        polygon: 'play',
+        polyline: 'download',
+        rect: 'mail',
+    }
+
+    it.each(Object.entries(byTag))('renders <%s> elements for "%s"', (tag, name) => {
+        const wrapper = mount(Icon, { props: { name } })
+        expect(wrapper.find(tag).exists()).toBe(true)
+    })
+})

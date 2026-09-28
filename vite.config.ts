@@ -50,6 +50,17 @@ export default defineConfig({
             reporter: ['lcov', 'text'],
             reportsDirectory: './coverage',
             include: ['src/**/*.{ts,vue}'],
+            // Barrels are pure re-exports with no statements of their own,
+            // and types/ holds only interfaces. v8 attributes neither, so
+            // leaving them in reports them as 0% and drags the real number
+            // down for no signal.
+            exclude: ['src/**/index.ts', 'src/types/**'],
+            thresholds: {
+                statements: 90,
+                branches: 75,
+                functions: 90,
+                lines: 95,
+            },
         },
     },
 })

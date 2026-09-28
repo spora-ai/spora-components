@@ -1,4 +1,5 @@
-import { formatRelativeTime } from '@/composables/useRelativeTime'
+import { ref } from 'vue'
+import { formatRelativeTime, useRelativeTime } from '@/composables/useRelativeTime'
 
 const NOW = new Date('2026-09-27T12:00:00Z')
 
@@ -73,5 +74,44 @@ describe('formatRelativeTime', () => {
 
     it('returns the raw input for an invalid string', () => {
         expect(formatRelativeTime('not-a-date')).toBe('not-a-date')
+    })
+})
+describe('useRelativeTime', () => {
+    beforeEach(() => {
+        vi.useFakeTimers()
+        vi.setSystemTime(NOW)
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it('wraps formatRelativeTime behind a zero-arg callable', () => {
+        expect(useRelativeTime(ago(5, 'minute'))()).toBe('5m ago')
+    })
+
+    it('re-evaluates when the underlying ref changes', () => {
+        const stamp = ref(ago(5, 'minute'))
+        const relative = useRelativeTime(stamp)
+
+        expect(relative()).toBe('5m ago')
+
+        stamp.value = ago(2, 'hour')
+        expect(relative()).toBe('2h ago')
+    })
+
+    it('accepts a getter and reads it on every call', () => {
+        let hoursAgo = 3
+        const relative = useRelativeTime(() => ago(hoursAgo, 'hour'))
+
+        expect(relative()).toBe('3h ago')
+
+        hoursAgo = 6
+        expect(relative()).toBe('6h ago')
+    })
+
+    it('handles a nullish timestamp without throwing', () => {
+        expect(useRelativeTime(null)()).toBe('')
+        expect(useRelativeTime(undefined)()).toBe('')
     })
 })

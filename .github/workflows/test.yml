@@ -16,7 +16,16 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci --ignore-scripts
-      - run: npm test
+      # Coverage, not plain `npm test` — sonar-project.properties points
+      # at coverage/lcov.info, and the artifact upload below has nothing
+      # to upload unless this produces it.
+      - run: npm run test:coverage
+      - name: Verify coverage was produced
+        run: |
+          if [ ! -s coverage/lcov.info ]; then
+            echo "::error::coverage/lcov.info is missing or empty — Sonar would publish 0% coverage."
+            exit 1
+          fi
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
