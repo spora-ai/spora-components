@@ -44,11 +44,10 @@ function packAndUnpack() {
     const workspace = mkdtempSync(join(tmpdir(), 'spora-components-pack-'))
 
     try {
-        // NOSONAR jssecurity:S4036 — fixed binary, argument array, no
-        // shell, and every argument is derived from mkdtemp rather than
-        // from input. npm's own packer is what defines the published
-        // file set, so calling it is the point of the check.
-        execFileSync('npm', ['pack', '--pack-destination', workspace, '--silent'], {
+        // Fixed binary, argument array, no shell, and every argument
+        // derives from mkdtemp rather than from input. npm's own packer
+        // defines the published file set, so calling it is the point.
+        execFileSync('npm', ['pack', '--pack-destination', workspace, '--silent'], { // NOSONAR jssecurity:S4036
             cwd: packageRoot,
             stdio: 'pipe',
         })
@@ -58,9 +57,9 @@ function packAndUnpack() {
             throw new Error('npm pack produced no tarball')
         }
 
-        // NOSONAR jssecurity:S4036 — as above; tarball is a filename
-        // read out of the temp directory, never a caller-supplied path.
-        execFileSync('tar', ['-xzf', join(workspace, tarball), '-C', workspace], { stdio: 'pipe' })
+        // As above; tarball is a filename read out of the temp
+        // directory, never a caller-supplied path.
+        execFileSync('tar', ['-xzf', join(workspace, tarball), '-C', workspace], { stdio: 'pipe' }) // NOSONAR jssecurity:S4036
 
         return join(workspace, 'package')
     } catch (error) {
