@@ -1,6 +1,6 @@
 {
   "name": "@spora-ai/components",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared Vue 3 component primitives (Avatar, Icon, palettes, composables) for Spora frontends.",
   "keywords": [
     "spora",
