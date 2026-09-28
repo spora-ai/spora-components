@@ -39,4 +39,18 @@ export default tseslint.config(
             'no-debugger': 'warn',
         },
     },
+    {
+        // Build/verify scripts run on Node, and reporting to stdout is
+        // their entire output contract.
+        files: ['scripts/**/*.mjs'],
+        languageOptions: {
+            globals: {
+                process: 'readonly',
+                console: 'readonly',
+            },
+        },
+        rules: {
+            'no-console': 'off',
+        },
+    },
 )

@@ -26,14 +26,17 @@ jobs:
           test -f dist/lib.js
           test -f dist/spora-components.css
           test -d dist/types
-      # Catches an exports entry pointing at a file the build does not
-      # emit, or a subpath whose stylesheet is unreachable — the defect
-      # that shipped unstyled components to consumers once already.
       - name: publint
         run: npx --yes publint@latest --strict
-      - name: Verify every exports target resolves in the packed tarball
+      # Every exports target must survive the `files` filter. publint
+      # reads the working tree, so it cannot catch a target that builds
+      # fine locally but is absent from the published tarball.
+      - name: Verify exports targets survive packing
         run: |
-          npx --yes @arethetypeswrong/cli@latest --pack .
+          npm pack --pack-destination "$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/unpacked"
+          tar -xzf "$RUNNER_TEMP"/spora-components-*.tgz -C "$RUNNER_TEMP/unpacked"
+          node scripts/verify-exports.mjs "$RUNNER_TEMP/unpacked/package"
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:

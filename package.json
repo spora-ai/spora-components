@@ -25,9 +25,7 @@
       "default": "./dist/lib.js"
     },
     "./types": {
-      "types": "./dist/types/types/profilePicture.d.ts",
-      "import": "./dist/types/types/profilePicture.d.ts",
-      "default": "./dist/types/types/profilePicture.d.ts"
+      "types": "./dist/types/types/profilePicture.d.ts"
     },
     "./styles": "./dist/spora-components.css",
     "./styles.css": "./dist/spora-components.css",
