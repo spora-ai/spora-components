@@ -26,6 +26,18 @@ export type PaletteKey =
 
 export interface PaletteSwatch {
   readonly key: PaletteKey
+  /**
+   * The English display name, and — because Spora keys translations by the
+   * English source text — also the key a consumer passes to `t()`:
+   *
+   * ```ts
+   * t(palette.label) // 'Slate' → 'Schiefer'
+   * ```
+   *
+   * This package deliberately has no vue-i18n dependency, so it cannot
+   * translate anything itself. Exposing the English string as the key keeps
+   * the catalogue in the consuming app, where the other strings live.
+   */
   readonly label: string
   readonly background: string
   readonly foreground: string
