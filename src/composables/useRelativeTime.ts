@@ -36,8 +36,8 @@ import { type MaybeRefOrGetter, toValue } from 'vue'
 const COMPACT_ENGLISH = /^en\b/i
 
 /**
- * `diff` is positive for the past and negative for the future, because it
- * is `now - then`. `Intl.RelativeTimeFormat` uses the opposite convention —
+ * `diff` is positive for the past and negative for the future, because it is
+ * `now - then`. `Intl.RelativeTimeFormat` uses the opposite convention —
  * negative means past — so the value is negated on the way in.
  *
  * The English branch never needed this because it hardcodes the word `ago`
@@ -51,6 +51,64 @@ function relative(locale: string, diff: number, unit: Intl.RelativeTimeFormatUni
     return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-diff, unit)
 }
 
+/** The unit a diff is counted in, the count, and the compact English suffix. */
+interface TimeBucket {
+    /** The `Intl` unit the count is expressed in. */
+    unit: Intl.RelativeTimeFormatUnit
+    /** The signed count of those units — positive for the past, like `diff`. */
+    count: number
+    /** The suffix the compact English form appends to the count. */
+    compactSuffix: string
+}
+
+/**
+ * The bucket a diff of at least a minute falls into.
+ *
+ * The thresholds are on the rounded count rather than on the raw diff, so
+ * 59.5 minutes reads as an hour and not as 60 minutes.
+ *
+ * Months and years are counted from the days, not from the weeks: the week
+ * bucket ends at five weeks, and a year is not twelve weeks.
+ */
+function bucketFor(diffSec: number): TimeBucket {
+    const minutes = Math.round(diffSec / 60)
+    if (Math.abs(minutes) < 60) return { unit: 'minute', count: minutes, compactSuffix: 'm' }
+
+    const hours = Math.round(minutes / 60)
+    if (Math.abs(hours) < 24) return { unit: 'hour', count: hours, compactSuffix: 'h' }
+
+    const days = Math.round(hours / 24)
+    if (Math.abs(days) < 7) return { unit: 'day', count: days, compactSuffix: 'd' }
+
+    const weeks = Math.round(days / 7)
+    if (Math.abs(weeks) < 5) return { unit: 'week', count: weeks, compactSuffix: 'w' }
+
+    const months = Math.round(days / 30)
+    if (Math.abs(months) < 12) return { unit: 'month', count: months, compactSuffix: 'mo' }
+
+    const years = Math.round(days / 365)
+    return { unit: 'year', count: years, compactSuffix: 'y' }
+}
+
+/**
+ * The sub-minute bucket.
+ *
+ * "Essentially now" on purpose: English says `just now` rather than
+ * `30 seconds ago` to keep list rows quiet, so the other locales get the same
+ * treatment instead of the literal value.
+ */
+function essentiallyNow(locale: string, diffSec: number): string {
+    if (!COMPACT_ENGLISH.test(locale)) return relative(locale, 0, 'second')
+    if (diffSec >= 0) return 'just now'
+    return 'in a moment'
+}
+
+/**
+ * A timestamp as a relative string, in `locale`.
+ *
+ * An empty locale falls back to English rather than reaching `Intl`: an empty
+ * string is a missing locale, and `Intl` throws a `RangeError` on it.
+ */
 export function formatRelativeTime(
     iso: MaybeRefOrGetter<string | null | undefined>,
     locale: MaybeRefOrGetter<string> = 'en',
@@ -62,46 +120,12 @@ export function formatRelativeTime(
     const then = new Date(value).getTime()
     if (!Number.isFinite(then)) return value
 
-    const now = Date.now()
-    const diffSec = Math.round((now - then) / 1000)
-    const abs = Math.abs(diffSec)
+    const diffSec = Math.round((Date.now() - then) / 1000)
+    if (Math.abs(diffSec) < 60) return essentiallyNow(lang, diffSec)
 
-    if (abs < 60) {
-        // The sub-minute bucket is "essentially now" on purpose — English says
-        // 'just now' rather than '30 seconds ago' to keep list rows quiet, so
-        // other locales get the same treatment instead of the literal value.
-        return COMPACT_ENGLISH.test(lang)
-            ? diffSec >= 0 ? 'just now' : 'in a moment'
-            : relative(lang, 0, 'second')
-    }
-
-    const minutes = Math.round(diffSec / 60)
-    if (Math.abs(minutes) < 60) {
-        return COMPACT_ENGLISH.test(lang) ? `${minutes}m ago` : relative(lang, minutes, 'minute')
-    }
-
-    const hours = Math.round(minutes / 60)
-    if (Math.abs(hours) < 24) {
-        return COMPACT_ENGLISH.test(lang) ? `${hours}h ago` : relative(lang, hours, 'hour')
-    }
-
-    const days = Math.round(hours / 24)
-    if (Math.abs(days) < 7) {
-        return COMPACT_ENGLISH.test(lang) ? `${days}d ago` : relative(lang, days, 'day')
-    }
-
-    const weeks = Math.round(days / 7)
-    if (Math.abs(weeks) < 5) {
-        return COMPACT_ENGLISH.test(lang) ? `${weeks}w ago` : relative(lang, weeks, 'week')
-    }
-
-    const months = Math.round(days / 30)
-    if (Math.abs(months) < 12) {
-        return COMPACT_ENGLISH.test(lang) ? `${months}mo ago` : relative(lang, months, 'month')
-    }
-
-    const years = Math.round(days / 365)
-    return COMPACT_ENGLISH.test(lang) ? `${years}y ago` : relative(lang, years, 'year')
+    const bucket = bucketFor(diffSec)
+    if (COMPACT_ENGLISH.test(lang)) return `${bucket.count}${bucket.compactSuffix} ago`
+    return relative(lang, bucket.count, bucket.unit)
 }
 
 /**
