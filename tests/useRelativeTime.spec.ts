@@ -173,3 +173,27 @@ describe('useRelativeTime', () => {
         expect(useRelativeTime(undefined)()).toBe('')
     })
 })
+
+describe('an unusable locale', () => {
+    beforeEach(() => {
+        vi.useFakeTimers()
+        vi.setSystemTime(NOW)
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it('falls back to English instead of throwing', () => {
+        // `Intl.RelativeTimeFormat` throws a RangeError on a structurally
+        // invalid tag. A broken locale is a broken locale, not a crash.
+        expect(() => formatRelativeTime(ago(5, 'minute'), 'de_DE')).not.toThrow()
+        expect(formatRelativeTime(ago(5, 'minute'), 'de_DE')).toBe('5m ago')
+        expect(formatRelativeTime(ago(5, 'minute'), 'e')).toBe('5m ago')
+        expect(formatRelativeTime(ago(5, 'minute'), '')).toBe('5m ago')
+    })
+
+    it('still renders a valid locale in that locale', () => {
+        expect(formatRelativeTime(ago(5, 'minute'), 'de')).toBe('vor 5 Minuten')
+    })
+})

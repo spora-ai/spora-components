@@ -133,10 +133,17 @@ Glyphs are single-`d` path data only, so no raw SVG markup reaches the DOM.
 
 - `useInitials(name)` — `'Maria Rodriguez'` → `'MR'`, `'Fabian'` → `'FA'`,
   empty → `'?'`. Accepts a ref, getter, or plain string.
-- `formatRelativeTime(iso)` — `'5m ago'`, `'2h ago'`, `'yesterday'`,
-  `'in a moment'`.
-- `useRelativeTime(iso)` — reactive wrapper over `formatRelativeTime`; returns
-  a zero-arg function that re-reads the ref on each call.
+- `formatRelativeTime(iso, locale?)` — `'5m ago'`, `'2h ago'`, `'3d ago'`,
+  `'in a moment'`. `locale` defaults to `'en'`; English keeps the compact
+  form, every other locale renders through `Intl.RelativeTimeFormat`
+  (`'vor 5 Minuten'` for German). A locale `Intl` cannot use — an empty
+  string, or a structurally invalid tag such as `'de_DE'` — falls back to
+  English rather than throwing. Accepts a ref or getter for `locale`.
+- `useRelativeTime(iso, locale?)` — reactive wrapper over `formatRelativeTime`;
+  returns a zero-arg function that re-reads the refs on each call.
+
+The package has no i18n dependency of its own: `locale` is a BCP-47 tag you
+pass in, and the catalogue lives in the consuming app.
 
 ### `lib`
 

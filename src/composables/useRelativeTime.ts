@@ -104,10 +104,28 @@ function essentiallyNow(locale: string, diffSec: number): string {
 }
 
 /**
+ * A locale `Intl` will accept.
+ *
+ * `Intl.RelativeTimeFormat` throws a `RangeError` on a structurally invalid
+ * tag — `'de_DE'` and `'e'` are both invalid, and so is the empty string.
+ * A missing or malformed locale is a missing locale, not a crash: fall back
+ * to English, which is the fallback every other layer already uses.
+ */
+function safeLocale(locale: string): string {
+    if (!locale) return 'en'
+    try {
+        return Intl.getCanonicalLocales(locale)[0] ?? 'en'
+    } catch {
+        return 'en'
+    }
+}
+
+/**
  * A timestamp as a relative string, in `locale`.
  *
- * An empty locale falls back to English rather than reaching `Intl`: an empty
- * string is a missing locale, and `Intl` throws a `RangeError` on it.
+ * A locale `Intl` cannot use falls back to English rather than reaching it:
+ * an empty string is a missing locale, and a structurally invalid tag is a
+ * broken one, and `Intl` throws a `RangeError` on both.
  */
 export function formatRelativeTime(
     iso: MaybeRefOrGetter<string | null | undefined>,
@@ -116,7 +134,7 @@ export function formatRelativeTime(
     const value = toValue(iso)
     if (typeof value !== 'string' || value === '') return ''
 
-    const lang = toValue(locale) || 'en'
+    const lang = safeLocale(toValue(locale))
     const then = new Date(value).getTime()
     if (!Number.isFinite(then)) return value
 
