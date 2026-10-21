@@ -1,22 +1,8 @@
 /**
  * ISO-8601 timestamp → human-readable relative-time string.
  *
- * Two in-tree implementations existed before the extraction:
- *
- *   - host DashboardAgentCard.vue:194 — minute / hour / day / week /
- *     month / year buckets, future-aware (`'in a moment'` for
- *     negative diffs)
- *   - plugin AgentDetailPanel.vue:165 — minute / hour / 'yesterday'
- *     only, no future handling
- *
- * The host's bucketing is more comprehensive and ships in the dashboard
- * already; this helper is its behaviour, lifted into the shared
- * package. Both call sites migrate to this function.
- *
- * Reactivity: **static** (one-shot render). The composable accepts a
- * reactive `MaybeRefOrGetter<string | null>` and resolves once. Callers
- * that need ticking updates re-invoke by binding to a reactive value
- * or by mounting on a `setInterval`.
+ * Static: the timestamp is resolved at call time and never ticks, so a label
+ * that must age re-invokes the function on a `setInterval`.
  *
  * Usage:
  *   <span>{{ formatRelativeTime(task.updated_at) }}</span>
@@ -26,12 +12,12 @@
 import { type MaybeRefOrGetter, toValue } from 'vue'
 
 /**
- * English renders through the compact templates below rather than
- * `Intl.RelativeTimeFormat`, because the compact form (`5m ago`) is what
- * the dashboard has always shipped and what its 8 assertions pin. Handing
- * English to `Intl` would return `5 minutes ago` and churn every one of
- * them for no gain in correctness — so the English branch is frozen and
- * every other locale goes through `Intl` for its plural forms.
+ * English keeps the compact templates below (`5m ago`); every other locale
+ * goes through `Intl.RelativeTimeFormat` for its plural forms.
+ *
+ * The compact form is what the host dashboard ships and what this package's
+ * assertions pin. Handing English to `Intl` would return `5 minutes ago` and
+ * churn them for no gain in correctness.
  */
 const COMPACT_ENGLISH = /^en\b/i
 
@@ -40,30 +26,23 @@ const COMPACT_ENGLISH = /^en\b/i
  * `now - then`. `Intl.RelativeTimeFormat` uses the opposite convention —
  * negative means past — so the value is negated on the way in.
  *
- * The English branch never needed this because it hardcodes the word `ago`
- * next to a signed number. That is also why English is wrong for future
- * timestamps: 5 minutes ahead renders as `-5m ago`. Correcting it is a
- * separate change, because `useRelativeTime.spec.ts` pins that behaviour on
- * purpose, so this function preserves it for English and renders other
- * locales correctly.
+ * English hardcodes the word `ago` next to the signed number, so a future
+ * timestamp renders as `-5m ago`. `useRelativeTime.spec.ts` pins that on
+ * purpose: correcting it is a separate change.
  */
 function relative(locale: string, diff: number, unit: Intl.RelativeTimeFormatUnit): string {
     return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-diff, unit)
 }
 
-/** The unit a diff is counted in, the count, and the compact English suffix. */
 interface TimeBucket {
-    /** The `Intl` unit the count is expressed in. */
     unit: Intl.RelativeTimeFormatUnit
     /** The signed count of those units — positive for the past, like `diff`. */
     count: number
-    /** The suffix the compact English form appends to the count. */
+    /** The suffix the English branch appends; other locales use `unit`. */
     compactSuffix: string
 }
 
 /**
- * The bucket a diff of at least a minute falls into.
- *
  * The thresholds are on the rounded count rather than on the raw diff, so
  * 59.5 minutes reads as an hour and not as 60 minutes.
  *
@@ -91,8 +70,6 @@ function bucketFor(diffSec: number): TimeBucket {
 }
 
 /**
- * The sub-minute bucket.
- *
  * "Essentially now" on purpose: English says `just now` rather than
  * `30 seconds ago` to keep list rows quiet, so the other locales get the same
  * treatment instead of the literal value.
@@ -106,10 +83,9 @@ function essentiallyNow(locale: string, diffSec: number): string {
 /**
  * A locale `Intl` will accept.
  *
- * `Intl.RelativeTimeFormat` throws a `RangeError` on a structurally invalid
- * tag — `'de_DE'` and `'e'` are both invalid, and so is the empty string.
- * A missing or malformed locale is a missing locale, not a crash: fall back
- * to English, which is the fallback every other layer already uses.
+ * `Intl` throws a `RangeError` on a structurally invalid tag — `'de_DE'` and
+ * `'e'` are both invalid — so a malformed locale is a missing locale, not a
+ * crash: it falls back to English.
  */
 function safeLocale(locale: string): string {
     if (!locale) return 'en'
@@ -123,9 +99,7 @@ function safeLocale(locale: string): string {
 /**
  * A timestamp as a relative string, in `locale`.
  *
- * A locale `Intl` cannot use falls back to English rather than reaching it:
- * an empty string is a missing locale, and a structurally invalid tag is a
- * broken one, and `Intl` throws a `RangeError` on both.
+ * A locale `Intl` cannot use falls back to English rather than throwing.
  */
 export function formatRelativeTime(
     iso: MaybeRefOrGetter<string | null | undefined>,
@@ -147,8 +121,8 @@ export function formatRelativeTime(
 }
 
 /**
- * Reactive alias for `formatRelativeTime`. Returns a function that
- * re-evaluates when the underlying ref changes.
+ * Reactive alias for `formatRelativeTime`. Returns a function that re-reads
+ * the ref (or getter) on every call.
  */
 export function useRelativeTime(
     iso: MaybeRefOrGetter<string | null | undefined>,
