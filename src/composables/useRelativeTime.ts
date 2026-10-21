@@ -21,39 +21,129 @@
  * Usage:
  *   <span>{{ formatRelativeTime(task.updated_at) }}</span>
  *   <span>{{ formatRelativeTime(() => chat.lastMessageAt) }}</span>
+ *   <span>{{ formatRelativeTime(stamp, locale) }}</span>
  */
 import { type MaybeRefOrGetter, toValue } from 'vue'
 
-export function formatRelativeTime(iso: MaybeRefOrGetter<string | null | undefined>): string {
-  const value = toValue(iso)
-  if (typeof value !== 'string' || value === '') return ''
+/**
+ * English renders through the compact templates below rather than
+ * `Intl.RelativeTimeFormat`, because the compact form (`5m ago`) is what
+ * the dashboard has always shipped and what its 8 assertions pin. Handing
+ * English to `Intl` would return `5 minutes ago` and churn every one of
+ * them for no gain in correctness — so the English branch is frozen and
+ * every other locale goes through `Intl` for its plural forms.
+ */
+const COMPACT_ENGLISH = /^en\b/i
 
-  const then = new Date(value).getTime()
-  if (!Number.isFinite(then)) return value
+/**
+ * `diff` is positive for the past and negative for the future, because it is
+ * `now - then`. `Intl.RelativeTimeFormat` uses the opposite convention —
+ * negative means past — so the value is negated on the way in.
+ *
+ * The English branch never needed this because it hardcodes the word `ago`
+ * next to a signed number. That is also why English is wrong for future
+ * timestamps: 5 minutes ahead renders as `-5m ago`. Correcting it is a
+ * separate change, because `useRelativeTime.spec.ts` pins that behaviour on
+ * purpose, so this function preserves it for English and renders other
+ * locales correctly.
+ */
+function relative(locale: string, diff: number, unit: Intl.RelativeTimeFormatUnit): string {
+    return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-diff, unit)
+}
 
-  const now = Date.now()
-  const diffSec = Math.round((now - then) / 1000)
-  const abs = Math.abs(diffSec)
+/** The unit a diff is counted in, the count, and the compact English suffix. */
+interface TimeBucket {
+    /** The `Intl` unit the count is expressed in. */
+    unit: Intl.RelativeTimeFormatUnit
+    /** The signed count of those units — positive for the past, like `diff`. */
+    count: number
+    /** The suffix the compact English form appends to the count. */
+    compactSuffix: string
+}
 
-  if (abs < 60) return diffSec >= 0 ? 'just now' : 'in a moment'
+/**
+ * The bucket a diff of at least a minute falls into.
+ *
+ * The thresholds are on the rounded count rather than on the raw diff, so
+ * 59.5 minutes reads as an hour and not as 60 minutes.
+ *
+ * Months and years are counted from the days, not from the weeks: the week
+ * bucket ends at five weeks, and a year is not twelve weeks.
+ */
+function bucketFor(diffSec: number): TimeBucket {
+    const minutes = Math.round(diffSec / 60)
+    if (Math.abs(minutes) < 60) return { unit: 'minute', count: minutes, compactSuffix: 'm' }
 
-  const minutes = Math.round(diffSec / 60)
-  if (Math.abs(minutes) < 60) return `${minutes}m ago`
+    const hours = Math.round(minutes / 60)
+    if (Math.abs(hours) < 24) return { unit: 'hour', count: hours, compactSuffix: 'h' }
 
-  const hours = Math.round(minutes / 60)
-  if (Math.abs(hours) < 24) return `${hours}h ago`
+    const days = Math.round(hours / 24)
+    if (Math.abs(days) < 7) return { unit: 'day', count: days, compactSuffix: 'd' }
 
-  const days = Math.round(hours / 24)
-  if (Math.abs(days) < 7) return `${days}d ago`
+    const weeks = Math.round(days / 7)
+    if (Math.abs(weeks) < 5) return { unit: 'week', count: weeks, compactSuffix: 'w' }
 
-  const weeks = Math.round(days / 7)
-  if (Math.abs(weeks) < 5) return `${weeks}w ago`
+    const months = Math.round(days / 30)
+    if (Math.abs(months) < 12) return { unit: 'month', count: months, compactSuffix: 'mo' }
 
-  const months = Math.round(days / 30)
-  if (Math.abs(months) < 12) return `${months}mo ago`
+    const years = Math.round(days / 365)
+    return { unit: 'year', count: years, compactSuffix: 'y' }
+}
 
-  const years = Math.round(days / 365)
-  return `${years}y ago`
+/**
+ * The sub-minute bucket.
+ *
+ * "Essentially now" on purpose: English says `just now` rather than
+ * `30 seconds ago` to keep list rows quiet, so the other locales get the same
+ * treatment instead of the literal value.
+ */
+function essentiallyNow(locale: string, diffSec: number): string {
+    if (!COMPACT_ENGLISH.test(locale)) return relative(locale, 0, 'second')
+    if (diffSec >= 0) return 'just now'
+    return 'in a moment'
+}
+
+/**
+ * A locale `Intl` will accept.
+ *
+ * `Intl.RelativeTimeFormat` throws a `RangeError` on a structurally invalid
+ * tag — `'de_DE'` and `'e'` are both invalid, and so is the empty string.
+ * A missing or malformed locale is a missing locale, not a crash: fall back
+ * to English, which is the fallback every other layer already uses.
+ */
+function safeLocale(locale: string): string {
+    if (!locale) return 'en'
+    try {
+        return Intl.getCanonicalLocales(locale)[0] ?? 'en'
+    } catch {
+        return 'en'
+    }
+}
+
+/**
+ * A timestamp as a relative string, in `locale`.
+ *
+ * A locale `Intl` cannot use falls back to English rather than reaching it:
+ * an empty string is a missing locale, and a structurally invalid tag is a
+ * broken one, and `Intl` throws a `RangeError` on both.
+ */
+export function formatRelativeTime(
+    iso: MaybeRefOrGetter<string | null | undefined>,
+    locale: MaybeRefOrGetter<string> = 'en',
+): string {
+    const value = toValue(iso)
+    if (typeof value !== 'string' || value === '') return ''
+
+    const lang = safeLocale(toValue(locale))
+    const then = new Date(value).getTime()
+    if (!Number.isFinite(then)) return value
+
+    const diffSec = Math.round((Date.now() - then) / 1000)
+    if (Math.abs(diffSec) < 60) return essentiallyNow(lang, diffSec)
+
+    const bucket = bucketFor(diffSec)
+    if (COMPACT_ENGLISH.test(lang)) return `${bucket.count}${bucket.compactSuffix} ago`
+    return relative(lang, bucket.count, bucket.unit)
 }
 
 /**
@@ -61,7 +151,8 @@ export function formatRelativeTime(iso: MaybeRefOrGetter<string | null | undefin
  * re-evaluates when the underlying ref changes.
  */
 export function useRelativeTime(
-  iso: MaybeRefOrGetter<string | null | undefined>,
+    iso: MaybeRefOrGetter<string | null | undefined>,
+    locale: MaybeRefOrGetter<string> = 'en',
 ): () => string {
-  return () => formatRelativeTime(iso)
+    return () => formatRelativeTime(iso, locale)
 }
