@@ -128,8 +128,8 @@ describe('formatRelativeTime — locale awareness', () => {
     // Pins a known discrepancy rather than hiding it: English hardcodes the
     // word `ago` beside a signed number, so a future timestamp reads as
     // "-5m ago". The sign is only corrected on the Intl path. Fixing English
-    // means changing the assertion at the top of this file, which was written
-    // deliberately to document current behaviour — so it is a separate change.
+    // means changing the assertion below, which was written deliberately to
+    // document current behaviour — so it is a separate change.
     it('still renders a future timestamp as "-Xm ago" in English', () => {
         expect(formatRelativeTime(inN(5, 'minute'), 'en')).toBe('-5m ago')
     })

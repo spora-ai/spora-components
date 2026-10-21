@@ -1,15 +1,11 @@
 /**
  * Palette preview colours — mirrors `Spora\Services\AgentPictures\Palette`
- * on the backend so the in-picker swatch matches the server-resolved
- * avatar tile exactly. The fg/bg hex pairs are resolved server-side on
- * every AgentResource read; this map is the source of truth for the
- * pre-API preview rendered inside `AgentProfilePictureSection`.
+ * on the backend, so the picker can show the swatch before the server
+ * resolves the tile.
  *
- * Keeping the map in lockstep with the backend is a release-train
- * concern: any new palette must be added to both repos before tagging.
- * `palettes.spec.ts` pins the key list against a literal copy of the
- * PHP `Palette` cases, so a palette added or renamed on one side fails
- * this package's test suite.
+ * The two lists must stay in step: `palettes.spec.ts` pins the key list
+ * against a literal transcription of the PHP cases, so a palette added or
+ * renamed on one side fails this package's test suite.
  */
 
 export type PaletteKey =
@@ -28,15 +24,14 @@ export interface PaletteSwatch {
   readonly key: PaletteKey
   /**
    * The English display name, and — because Spora keys translations by the
-   * English source text — also the key a consumer passes to `t()`:
+   * English source text — the key a consumer passes to `t()`:
    *
    * ```ts
    * t(palette.label) // 'Slate' → 'Schiefer'
    * ```
    *
-   * This package deliberately has no vue-i18n dependency, so it cannot
-   * translate anything itself. Exposing the English string as the key keeps
-   * the catalogue in the consuming app, where the other strings live.
+   * This package has no vue-i18n dependency, so it cannot translate anything
+   * itself; the catalogue stays in the consuming app.
    */
   readonly label: string
   readonly background: string
