@@ -10,6 +10,7 @@ const REGISTERED_NAMES = [
     'minus',
     'maximize',
     'minimize',
+    'terminal',
 ]
 
 describe('<Icon>', () => {
@@ -28,6 +29,14 @@ describe('<Icon>', () => {
         const paths = wrapper.findAll('path')
         expect(paths.length).toBeGreaterThan(1)
         expect(paths[0].attributes('d')).toBeTruthy()
+    })
+
+    it('renders the terminal prompt glyph (regression for the missing-icon fallback bug)', () => {
+        const wrapper = mount(Icon, { props: { name: 'terminal' } })
+        // The puzzle fallback is a single path; the prompt is a chevron plus
+        // an underscore. Asserting on the element count catches the registry
+        // losing the name, which silently renders the fallback instead.
+        expect(wrapper.findAll('path').length).toBe(2)
     })
 
     it('falls back to the puzzle glyph for unknown names', () => {
