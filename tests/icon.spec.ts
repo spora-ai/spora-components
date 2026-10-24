@@ -10,6 +10,7 @@ const REGISTERED_NAMES = [
     'minus',
     'maximize',
     'minimize',
+    'terminal',
 ]
 
 describe('<Icon>', () => {
@@ -28,6 +29,16 @@ describe('<Icon>', () => {
         const paths = wrapper.findAll('path')
         expect(paths.length).toBeGreaterThan(1)
         expect(paths[0].attributes('d')).toBeTruthy()
+    })
+
+    it('renders the bundled terminal glyph with the path data the consumer passes inline', () => {
+        const wrapper = mount(Icon, { props: { name: 'terminal' } })
+
+        // Assert the path data, not the element count: a count assertion
+        // passes for any two-stroke glyph.
+        const paths = wrapper.findAll('path').map((path) => path.attributes('d'))
+        expect(paths).toEqual(['M5 7l5 5-5 5', 'M12 17h7'])
+        expect(paths.join('')).toBe('M5 7l5 5-5 5M12 17h7')
     })
 
     it('falls back to the puzzle glyph for unknown names', () => {
