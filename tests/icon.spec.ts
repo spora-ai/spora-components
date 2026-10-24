@@ -34,10 +34,8 @@ describe('<Icon>', () => {
     it('renders the bundled terminal glyph with the path data the consumer passes inline', () => {
         const wrapper = mount(Icon, { props: { name: 'terminal' } })
 
-        // The path data is the contract, not the element count: the consumer
-        // passes 'M5 7l5 5-5 5M12 17h7' inline, so the bundled glyph has to
-        // be that same shape. A count assertion passes for any two-stroke
-        // glyph, so assert the data itself.
+        // Assert the path data, not the element count: a count assertion
+        // passes for any two-stroke glyph.
         const paths = wrapper.findAll('path').map((path) => path.attributes('d'))
         expect(paths).toEqual(['M5 7l5 5-5 5', 'M12 17h7'])
         expect(paths.join('')).toBe('M5 7l5 5-5 5M12 17h7')
