@@ -126,8 +126,13 @@ Thin wrappers taking the wire payload directly:
 
 ### `<Icon>`
 
-Inline SVG by name — `bell`, `refresh`, `chevron-right`, `plus`, and 60 more.
-Glyphs are single-`d` path data only, so no raw SVG markup reaches the DOM.
+Inline SVG by name — `bell`, `refresh`, `chevron-right`, `plus`, and many more.
+A bundled name can render several elements (the `compass` glyph is a circle
+and a path). A name that is not a bundled name but starts with a moveto (`M`
+or `m` followed by a number) is rendered as a single raw path, so a consumer
+can ship its own glyph without depending on the bundled palette. Any other
+unknown name falls back to the puzzle glyph. No raw SVG markup ever reaches
+the DOM.
 
 ### Composables
 
