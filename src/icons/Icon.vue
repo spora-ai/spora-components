@@ -163,6 +163,13 @@ const icons: Record<string, IconElement[]> = {
     { tag: 'polyline', points: '16 18 22 12 16 6' },
     { tag: 'polyline', points: '8 6 2 12 8 18' },
   ],
+  // A shell prompt rather than an angle-bracket pair: `code` is for
+  // "source code", this one is for "a command you can run". Merging the two
+  // would leave the command affordance reading as a code snippet.
+  terminal: [
+    { tag: 'path', d: 'M5 7l5 5-5 5' },
+    { tag: 'path', d: 'M12 17h7' },
+  ],
   play: [{ tag: 'polygon', points: '6 3 20 12 6 21 6 3' }],
   image: [
     { tag: 'rect', width: '18', height: '18', x: '3', y: '3', rx: '2', ry: '2' },
