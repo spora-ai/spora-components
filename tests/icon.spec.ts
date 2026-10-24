@@ -31,12 +31,16 @@ describe('<Icon>', () => {
         expect(paths[0].attributes('d')).toBeTruthy()
     })
 
-    it('renders the terminal prompt glyph (regression for the missing-icon fallback bug)', () => {
+    it('renders the bundled terminal glyph with the path data the consumer passes inline', () => {
         const wrapper = mount(Icon, { props: { name: 'terminal' } })
-        // The puzzle fallback is a single path; the prompt is a chevron plus
-        // an underscore. Asserting on the element count catches the registry
-        // losing the name, which silently renders the fallback instead.
-        expect(wrapper.findAll('path').length).toBe(2)
+
+        // The path data is the contract, not the element count: the consumer
+        // passes 'M5 7l5 5-5 5M12 17h7' inline, so the bundled glyph has to
+        // be that same shape. A count assertion passes for any two-stroke
+        // glyph, so assert the data itself.
+        const paths = wrapper.findAll('path').map((path) => path.attributes('d'))
+        expect(paths).toEqual(['M5 7l5 5-5 5', 'M12 17h7'])
+        expect(paths.join('')).toBe('M5 7l5 5-5 5M12 17h7')
     })
 
     it('falls back to the puzzle glyph for unknown names', () => {
