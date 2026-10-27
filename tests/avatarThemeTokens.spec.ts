@@ -79,7 +79,7 @@ async function compileAvatarStyle(id: string): Promise<string> {
  */
 async function mountInitialsTile(): Promise<{ tile: HTMLElement, computed: CSSStyleDeclaration }> {
     const wrapper = mount(Avatar, { props: { name: 'Max Mustermann' }, attachTo: document.body })
-    const tile = wrapper.get('[data-testid="avatar-initials"]').element
+    const tile = wrapper.get<HTMLElement>('[data-testid="avatar-initials"]').element
 
     // The compiled selectors only match if they carry the scope id Vue
     // actually stamped on this render.
